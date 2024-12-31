@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multilingual Timer</title>
+    <style>
+        @font-face {
+            font-family: 'Vazir';
+            src: url('https://cdn.jsdelivr.net/gh/rastikerdar/vazir-font/dist/Vazir.woff2') format('woff2'),
+                 url('https://cdn.jsdelivr.net/gh/rastikerdar/vazir-font/dist/Vazir.woff') format('woff');
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #fdfbfb, #ebedee); /* بازگشت به بک‌گراند اولیه */
+            color: #333;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            position: relative;
+        }
+
+        .container {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 30px 50px;
+            border-radius: 20px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            color: #4CAF50;
+        }
+
+        #timer {
+            font-size: 3.5rem;
+            font-weight: bold;
+            background: #4CAF50;
+            color: white;
+            padding: 20px 40px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            display: inline-block;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .buttons {
+            margin-top: 20px;
+        }
+
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.2rem;
+            border-radius: 8px;
+            margin: 10px;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        button:hover {
+            background: #45a049;
+            transform: translateY(-5px); /* دکمه بالا می‌رود */
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3); /* سایه بیشتر */
+        }
+
+        footer {
+            margin-top: 20px;
+            font-size: 0.9rem;
+            color: #777;
+        }
+
+        footer a {
+            color: #4CAF50;
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        .language-menu {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            cursor: pointer;
+        }
+
+        .language-menu img {
+            width: 40px;
+            height: 40px;
+            transition: transform 0.3s ease;
+        }
+
+        .language-menu img:hover {
+            transform: scale(1.1);
+        }
+
+        .language-menu ul {
+            list-style: none;
+            margin: 0;
+            padding: 10px;
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            position: absolute;
+            top: 50px;
+            right: 0;
+            display: none;
+        }
+
+        .language-menu.active ul {
+            display: block;
+        }
+
+        .language-menu ul li {
+            padding: 10px 20px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .language-menu ul li:hover {
+            background: #4CAF50;
+            color: white;
+        }
+
+        /* Apply Vazir font for Farsi */
+        [lang="fa"] body, [lang="fa"] h1, [lang="fa"] button, [lang="fa"] #timer {
+            font-family: 'Vazir', sans-serif;
+        }
+    </style>
+</head>
+<body lang="en">
+    <!-- Language Menu -->
+    <div class="language-menu" onclick="toggleLanguageMenu()">
+        <img src="https://img.icons8.com/ios-filled/50/000000/globe.png" alt="Change Language">
+        <ul id="language-list">
+            <li data-lang="en">English</li>
+            <li data-lang="fr">Français</li>
+            <li data-lang="de">Deutsch</li>
+            <li data-lang="es">Español</li>
+            <li data-lang="fa">فارسی</li>
+        </ul>
+    </div>
+
+    <div class="container">
+        <h1 id="title">Timer</h1>
+        <div id="timer">00:00:00</div>
+        <div class="buttons">
+            <button onclick="startTimer()" id="start-btn">Start</button>
+            <button onclick="stopTimer()" id="stop-btn">Stop</button>
+            <button onclick="resetTimer()" id="reset-btn">Reset</button>
+        </div>
+    <footer>
+    Designed by <a href="https://github.com/Muhammad-Noraeii" target="_blank">Muhammad Noraeii</a>
+    </footer>
+    </div>
+
+    <script>
+        const translations = {
+            en: { title: "Timer", start: "Start", stop: "Stop", reset: "Reset" },
+            fr: { title: "Chronomètre", start: "Démarrer", stop: "Arrêter", reset: "Réinitialiser" },
+            de: { title: "Stoppuhr", start: "Starten", stop: "Stopp", reset: "Zurücksetzen" },
+            es: { title: "Cronómetro", start: "Comenzar", stop: "Detener", reset: "Restablecer" },
+            fa: { title: "تایمر", start: "شروع", stop: "توقف", reset: "بازنشانی" }
+        };
+
+        let timerRunning = false;
+
+        document.addEventListener("DOMContentLoaded", async () => {
+            const response = await fetch('/state');
+            const data = await response.json();
+            document.getElementById('timer').textContent = data.time;
+            if (data.running) {
+                startTimer();
+            }
+        });
+
+        function toggleLanguageMenu() {
+            const menu = document.querySelector('.language-menu');
+            menu.classList.toggle('active');
+        }
+
+        document.querySelectorAll('.language-menu ul li').forEach(item => {
+            item.addEventListener('click', event => {
+                const lang = event.target.getAttribute('data-lang');
+                changeLanguage(lang);
+                toggleLanguageMenu(); // Close menu after selection
+            });
+        });
+
+        function changeLanguage(lang) {
+            const { title, start, stop, reset } = translations[lang];
+            document.documentElement.lang = lang;
+            document.getElementById("title").textContent = title;
+            document.getElementById("start-btn").textContent = start;
+            document.getElementById("stop-btn").textContent = stop;
+            document.getElementById("reset-btn").textContent = reset;
+            if (lang === "fa") {
+                document.body.setAttribute("lang", "fa");
+            } else {
+                document.body.setAttribute("lang", "en");
+            }
+        }
+
+        async function startTimer() {
+            if (!timerRunning) {
+                timerRunning = true;
+                while (timerRunning) {
+                    const response = await fetch('/start');
+                    const data = await response.json();
+                    document.getElementById('timer').textContent = data.time;
+                    await new Promise(r => setTimeout(r, 1000));
+                }
+            }
+        }
+
+        async function stopTimer() {
+            timerRunning = false;
+            await fetch('/stop');
+        }
+
+        async function resetTimer() {
+            timerRunning = false;
+            await fetch('/reset');
+            document.getElementById('timer').textContent = "00:00:00";
+        }
+    </script>
+</body>
+</html>
